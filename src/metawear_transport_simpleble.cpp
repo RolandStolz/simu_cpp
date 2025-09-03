@@ -9,6 +9,43 @@
 MetaWearBle::Ctx::Ctx(SimpleBLE::Peripheral periph) : p(std::move(periph)) {
 }
 
+bool MetaWearBle::connect_by_id(std::string peripheral_id, int scan_ms) {
+    if (!SimpleBLE::Adapter::bluetooth_enabled())
+        return false;
+    auto adapters = SimpleBLE::Adapter::get_adapters();
+    if (adapters.empty())
+        return false;
+
+    auto adapter = adapters[0];
+    adapter.scan_for(scan_ms);
+    for (auto& p : adapter.scan_get_results()) {
+        if (iequals(p.address(), peripheral_id)) {
+            std::cout << "Found MetaWear device: " << p.identifier() << std::endl;
+
+            p.connect();
+            auto current_time = std::chrono::steady_clock::now();
+            while (!p.is_connected() ||
+                   std::chrono::steady_clock::now() - current_time < std::chrono::seconds(5)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+
+            if (p.is_connected()) {
+                ctx_ = std::make_unique<Ctx>(p);
+                wire_disconnect();
+                conn_.context = ctx_.get();
+                conn_.write_gatt_char = &s_write;
+                conn_.read_gatt_char = &s_read;
+                conn_.enable_notifications = &s_notify;
+                conn_.on_disconnect = &s_on_dc;
+                return true;
+            } else {
+                std::cout << "Failed to connect to device: " << p.identifier() << std::endl;
+            }
+        }
+    }
+    return false;
+}
+
 bool MetaWearBle::connect(int scan_ms) {
     if (!SimpleBLE::Adapter::bluetooth_enabled())
         return false;
@@ -176,7 +213,6 @@ void MetaWearBle::s_read(void* context, const void* caller, const MblMwGattChar*
     }
     auto svc = uuid128(ch->service_uuid_high, ch->service_uuid_low);
     auto chr = uuid128(ch->uuid_high, ch->uuid_low);
-
 
     try {
         auto data = c->p.read(svc, chr);

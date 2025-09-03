@@ -12,6 +12,7 @@ class MetaWearBle {
   public:
     // Connect to first device advertising the MetaWear service.
     bool connect(int scan_ms = 2000);
+    bool connect_by_id(std::string peripheral_id, int scan_ms = 2000);
     void disconnect();
     bool is_connected() const;
     MblMwBtleConnection* btle();
