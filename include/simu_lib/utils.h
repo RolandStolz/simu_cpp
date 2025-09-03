@@ -1,3 +1,5 @@
+#pragma once
+
 #include <algorithm> // std::equal
 #include <cctype>    // std::tolower
 #include <string>    // std::string

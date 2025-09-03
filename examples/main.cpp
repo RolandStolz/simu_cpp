@@ -6,6 +6,7 @@
 #include <metawear/sensor/gyro_bosch.h>
 #include <simu_lib/handler.h>
 #include <simu_lib/metawear_transport_simpleble.h>
+#include <simu_lib/metawear_async.h>
 
 #include <atomic>
 #include <chrono>
@@ -29,30 +30,9 @@ int main() {
 
     std::cout << "Connected! Initializing board..." << std::endl;
 
-    // Create board instance
     auto board = mbl_mw_metawearboard_create(transport.btle());
+    async_initialize_board(board).get();
 
-    // Fix: Use proper context handling
-    mbl_mw_metawearboard_initialize(
-        board, nullptr, [](void* context, MblMwMetaWearBoard* board, int32_t status) {
-            if (status == MBL_MW_STATUS_OK) {
-                std::cout << "Board initialization successful!" << std::endl;
-            } else {
-                std::cout << "Board initialization failed: " << status << std::endl;
-            }
-            init_complete = true; // Use atomic variable directly
-        });
-
-    // Wait for initialization to complete
-    while (!init_complete && transport.is_connected()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-
-    // if (!init_complete) {
-    //     std::cout << "Initialization timeout" << std::endl;
-    //     mbl_mw_metawearboard_free(board);
-    //     return -1;
-    // }
     auto model_name = mbl_mw_metawearboard_get_model_name(board);
     std::printf("Board model: %s\n", model_name);
 

@@ -3,12 +3,14 @@ set(header_files
     ${PROJECT_SOURCE_DIR}/include/simu_lib/handler.h
     ${PROJECT_SOURCE_DIR}/include/simu_lib/metawear_transport_simpleble.h
     ${PROJECT_SOURCE_DIR}/include/simu_lib/utils.h
+    ${PROJECT_SOURCE_DIR}/include/simu_lib/metawear_async.h
 )
 
 set(source_files
     # lib.cpp
     handler.cpp
     metawear_transport_simpleble.cpp
+    metawear_async.cpp
 )
 
 add_library(${cpp_lib_name}
